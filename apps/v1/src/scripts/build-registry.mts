@@ -1,13 +1,38 @@
 import { exec } from "child_process"
 import { promises as fs } from "fs"
 import path from "path"
+import { fileURLToPath } from "url"
 import { rimraf } from "rimraf"
 import { registrySchema, type Registry } from "shadcn/schema"
 
-// Import registry definitions
-import { components } from "@/registry/webgl/components/_registry"
-import { hooks } from "@/registry/webgl/hooks/_registry"
-import { lib } from "@/registry/webgl/lib/_registry"
+// Get current directory for relative imports
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+console.log("🔍 Script location:", __filename)
+console.log("🔍 Script directory:", __dirname)
+console.log("🔍 Current working directory:", process.cwd())
+
+// Import registry definitions with explicit relative paths
+const componentsPath = path.resolve(__dirname, "../registry/webgl/components/_registry.js")
+const hooksPath = path.resolve(__dirname, "../registry/webgl/hooks/_registry.js")
+const libPath = path.resolve(__dirname, "../registry/webgl/lib/_registry.js")
+
+console.log("🔍 Components path:", componentsPath)
+console.log("🔍 Hooks path:", hooksPath)
+console.log("🔍 Lib path:", libPath)
+
+const componentsModule = await import(componentsPath)
+const hooksModule = await import(hooksPath)
+const libModule = await import(libPath)
+
+console.log("🔍 Components module keys:", Object.keys(componentsModule))
+console.log("🔍 Hooks module keys:", Object.keys(hooksModule))
+console.log("🔍 Lib module keys:", Object.keys(libModule))
+
+const { components } = componentsModule
+const { hooks } = hooksModule
+const { lib } = libModule
 
 const REGISTRY_NAME = "shadercn/webgl"
 const REGISTRY_HOMEPAGE = "https://shadercn.dev"
@@ -23,7 +48,8 @@ async function buildRegistry() {
       homepage: REGISTRY_HOMEPAGE,
       items: [...components, ...hooks, ...lib].map((item) => ({
         ...item,
-        files: item.files?.map((file) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        files: item.files?.map((file: any) => ({
           ...file,
           path: `src/${file.path}`,
         })),
