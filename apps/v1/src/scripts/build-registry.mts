@@ -36,6 +36,7 @@ const { lib } = libModule
 
 const REGISTRY_NAME = "shadercn/webgl"
 const REGISTRY_HOMEPAGE = "https://shadercn.dev"
+const REGISTRY_URL = "https://shadecn.dev/r/webgl"
 const OUTPUT_DIR = "public/r/webgl"
 
 async function buildRegistry() {
@@ -46,14 +47,26 @@ async function buildRegistry() {
     const registry: Registry = {
       name: REGISTRY_NAME,
       homepage: REGISTRY_HOMEPAGE,
-      items: [...components, ...hooks, ...lib].map((item) => ({
-        ...item,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        files: item.files?.map((file: any) => ({
-          ...file,
-          path: `src/${file.path}`,
-        })),
-      })),
+      items: [...components, ...hooks, ...lib].map((item) => {
+        const hasThreeDependency = item.dependencies?.includes("three")
+
+        return {
+          ...item,
+          // Convert registryDependencies from simple names to full URLs
+          registryDependencies: item.registryDependencies?.map(
+            (dep: string) => `${REGISTRY_URL}/${dep}.json`
+          ),
+          // Automatically add @types/three to devDependencies if three is used
+          devDependencies: hasThreeDependency
+            ? ["@types/three"]
+            : item.devDependencies,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          files: item.files?.map((file: any) => ({
+            ...file,
+            path: `src/${file.path}`,
+          })),
+        }
+      }),
     }
 
     // Validate the registry schema
